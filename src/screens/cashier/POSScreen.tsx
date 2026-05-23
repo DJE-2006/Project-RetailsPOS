@@ -82,7 +82,7 @@ export default function POSScreen({ navigation }) {
   const refreshHeld = useCallback(async () => setHeldCarts(await getHeldCarts()), []);
   useEffect(() => { refreshHeld(); }, [refreshHeld]);
 
-  // ── Derived state ───────────────────────────────────────
+  // Computed values based on current state
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return products.filter((p) => {
@@ -110,14 +110,14 @@ export default function POSScreen({ navigation }) {
 
   const catData = useMemo(() => [{ id: '', name: 'All' }, ...categories], [categories]);
 
-  // Resolve a product's categoryId -> category name for its illustration.
+  // Map product IDs to quantities in cart
   const catNameById = useMemo(() => {
     const m = new Map<string, string>();
     categories.forEach((c) => m.set(c.id, c.name));
     return m;
   }, [categories]);
 
-  // ── Barcode lookup: find a product by exact barcode and add it ──
+  // Look up product by barcode and add to cart
   const addByBarcode = useCallback((code: string) => {
     const term = code.trim();
     if (!term) return false;
@@ -140,18 +140,18 @@ export default function POSScreen({ navigation }) {
     return true;
   }, [products, cartQtyMap, addItem]);
 
-  // Submitting the search box: treat an exact barcode match as a scan.
+  // Handle search box submit (treat as barcode scan)
   const handleScanSubmit = useCallback(() => {
     if (addByBarcode(search)) setSearch('');
   }, [search, addByBarcode]);
 
-  // Result coming back from the camera / hardware scanner modal.
+  // Scanner modal result
   const handleScannerResult = useCallback((code: string) => {
     setScannerOpen(false);
     addByBarcode(code);
   }, [addByBarcode]);
 
-  // ── Handlers ────────────────────────────────────────────
+  // Add product or show validation errors
   const handleAddItem = useCallback((product) => {
     if ((product.stock || 0) <= 0) {
       Alert.alert('Out of Stock', `${product.name} is out of stock.`);

@@ -96,7 +96,7 @@ export default function AddEditProductScreen({ route, navigation }: any) {
     return Object.keys(errs).length === 0;
   }, [name, price, stock]);
 
-  // Print a physical product-label barcode (native print / web print dialog).
+  // Print barcode label
   const handlePrintLabel = useCallback(async () => {
     const value = barcode.trim();
     if (!value || labelBusy) return;
@@ -110,7 +110,7 @@ export default function AddEditProductScreen({ route, navigation }: any) {
     }
   }, [barcode, name, labelBusy]);
 
-  // Export the barcode label as a PDF to share (native) or print/save (web).
+  // Export barcode label as PDF
   const handleExportLabel = useCallback(async () => {
     const value = barcode.trim();
     if (!value || labelBusy) return;

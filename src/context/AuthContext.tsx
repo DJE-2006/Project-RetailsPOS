@@ -22,9 +22,8 @@ export const AuthProvider = ({ children }: { children?: React.ReactNode }) => {
 
   // True while register() is mid-flight, so the auth listener doesn't
   // race against the in-progress setDoc and sign the user out.
-  const registeringRef = useRef(false);
+  const registeringRef = useRef(false); // Prevent race condition during signup
 
-  // ── Fetch Firestore user profile ──────────────────────────
   const fetchProfile = async (uid: string) => {
     try {
       const snap = await getDoc(doc(db, 'users', uid));
@@ -40,8 +39,6 @@ export const AuthProvider = ({ children }: { children?: React.ReactNode }) => {
     }
   };
 
-  // ── Listen to auth state changes ──────────────────────────
-  useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
         setUser(null);
@@ -51,7 +48,7 @@ export const AuthProvider = ({ children }: { children?: React.ReactNode }) => {
       }
 
       if (registeringRef.current) {
-        // register() will set state itself once the Firestore doc lands.
+        // Signup in progress, let it finish
         setLoading(false);
         return;
       }
@@ -103,7 +100,7 @@ export const AuthProvider = ({ children }: { children?: React.ReactNode }) => {
       try {
         await setDoc(doc(db, 'users', uid), userDoc);
       } catch (writeErr) {
-        // Roll back the auth account so the email isn't stuck unusable.
+        // Rollback the auth account if profile creation fails
         try { await deleteUser(cred.user); } catch {}
         throw writeErr;
       }
@@ -152,7 +149,7 @@ export const AuthProvider = ({ children }: { children?: React.ReactNode }) => {
     } catch (err) {
       console.error('logout error:', err);
     } finally {
-      // Switch the UI to login immediately, even if the auth listener lags.
+      // Clear UI immediately even if Firebase takes a moment
       setUser(null);
       setProfile(null);
     }

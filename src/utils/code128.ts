@@ -1,10 +1,7 @@
-// ─── Code-128 barcode encoding (code set B) ─────────────────────────
-// Pure, dependency-free encoder used by <Barcode />. Turns a string into
-// an array of module widths (alternating bar / space, starting with a
-// bar) that can be drawn with plain Views — no SVG or native lib needed.
+// Code-128 barcode encoding
+// Converts text to bar/space widths that can be rendered with simple Views
 
-// Canonical Code-128 symbol table: index 0-106, each a string of element
-// widths (bar,space,bar,space,bar,space — the stop pattern has 7).
+// Symbol patterns for Code-128
 const PATTERNS = [
   '212222', '222122', '222221', '121223', '121322', '131222', '122213', '122312',
   '132212', '221213', '221312', '231212', '112232', '122132', '122231', '113222',
@@ -25,11 +22,8 @@ const PATTERNS = [
 const START_B = 104;
 const STOP = 106;
 
-/**
- * Encodes `text` as Code-128 set B. Returns module widths alternating
- * bar, space, bar, … starting and ending with a bar.
- * Throws if the string contains a character outside ASCII 32-126.
- */
+// Encode text as Code-128, returning bar/space widths
+// Throws if the text contains non-ASCII characters (outside 32-126)
 export function encodeCode128(text: string): number[] {
   const values: number[] = [];
   for (let i = 0; i < text.length; i++) {
@@ -38,7 +32,7 @@ export function encodeCode128(text: string): number[] {
     values.push(code);
   }
 
-  // Modulo-103 checksum: start value + Σ value·position (1-indexed).
+  // Calculate checksum
   let checksum = START_B;
   values.forEach((v, i) => { checksum += v * (i + 1); });
   checksum %= 103;
@@ -51,10 +45,7 @@ export function encodeCode128(text: string): number[] {
   return modules;
 }
 
-/**
- * Generates a fresh 13-digit EAN-13-style code (12 random digits plus a
- * valid check digit). Used by the "Generate" button when adding products.
- */
+// Generate a random 13-digit barcode (12 random + 1 check digit)
 export function generateBarcode(): string {
   let base = '';
   for (let i = 0; i < 12; i++) base += Math.floor(Math.random() * 10);

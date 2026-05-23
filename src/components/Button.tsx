@@ -1,16 +1,10 @@
-// ─── Button ─────────────────────────────────────────────────────────────────
-// Reusable, theme-driven button for RetailPOS. Built on PressScale so it gets
-// the same tactile press micro-interaction used across the app.
-//
-// Variants:
-//   primary     – deep teal, filled (default CTA: checkout, sign in, save)
-//   secondary   – surface fill + border (cancel / neutral actions)
-//   destructive – outlined danger (discard, delete)
-//   success     – green filled (confirm sale)
-//   accent      – amber filled (highlight CTAs)
-//
-// Sizes: sm (40) · md (46) · lg (54). Supports leading/trailing icons,
-// loading spinner, disabled styling and full-width layout.
+// Core button component with variants and sizes
+// Primary: main CTAs like checkout, sign in, save
+// Secondary: cancel, neutral actions
+// Destructive: danger actions like delete
+// Success: confirm/complete actions
+// Accent: highlight CTAs
+// Sizes: sm (40px) · md (46px) · lg (54px)
 import React from 'react';
 import {
   Text, StyleSheet, ActivityIndicator, View,
@@ -41,8 +35,7 @@ const HEIGHTS: Record<Size, number> = { sm: 40, md: 46, lg: 54 };
 const FONT_SIZE: Record<Size, number> = { sm: FONTS.sizes.sm, md: FONTS.sizes.md, lg: FONTS.sizes.md };
 const ICON_SIZE: Record<Size, number> = { sm: 16, md: 18, lg: 20 };
 
-// Per-variant colours. `filled` variants paint a solid background; outlined
-// variants use a transparent fill with a coloured border.
+// Color & style config for each variant
 const VARIANTS: Record<Variant, { bg: string; fg: string; border?: string; shadow: boolean }> = {
   primary:     { bg: COLORS.primary, fg: COLORS.white,      shadow: true },
   success:     { bg: COLORS.success, fg: COLORS.white,      shadow: true },

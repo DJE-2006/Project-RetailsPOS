@@ -1,26 +1,18 @@
-// ─── Printable / shareable barcode labels ───────────────────────────
-// Builds a self-contained HTML document that renders a Code-128 barcode
-// for a product, then prints it (expo-print) or exports it as a PDF the
-// user can share (expo-sharing). On web it opens the browser print
-// dialog directly so the user can print or "Save as PDF".
+// Print & share barcode labels
+// Creates HTML that renders a Code-128 barcode, supports printing & PDF export
 import { Platform } from 'react-native';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { encodeCode128 } from './code128';
 
-// Escapes a string for safe interpolation into HTML text/attributes.
+// Escape special characters for safe HTML
 const escapeHtml = (s: string) =>
   s.replace(/[&<>"']/g, (c) => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string
   ));
 
-/**
- * Builds an HTML document rendering `value` as a Code-128 barcode label,
- * sized for a printable product label. The bars are emitted as a flexbox
- * row of black/white <span> elements derived from encodeCode128() module
- * widths — no images or external fonts, so it prints identically
- * everywhere. Returns null if the value can't be encoded.
- */
+// Create printable barcode label HTML
+// Returns null if the barcode can't be encoded
 export function buildBarcodeLabelHtml(value: string, productName?: string): string | null {
   const code = value.trim();
   if (!code) return null;
@@ -33,13 +25,13 @@ export function buildBarcodeLabelHtml(value: string, productName?: string): stri
   }
 
   const totalModules = modules.reduce((a, b) => a + b, 0);
-  // The bar area is 320px wide on the label; one module = this many px.
+  // Label bar area is 320px; scale each module proportionally
   const BAR_AREA_PX = 320;
   const unit = BAR_AREA_PX / totalModules;
 
   const bars = modules
     .map((m, i) => {
-      // Even indices are bars (black), odd are spaces (white).
+      // Alternate between black bars and white spaces
       const color = i % 2 === 0 ? '#000' : '#fff';
       return `<span style="display:inline-block;width:${(m * unit).toFixed(3)}px;height:90px;background:${color};"></span>`;
     })

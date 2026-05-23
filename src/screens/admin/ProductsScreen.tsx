@@ -32,7 +32,7 @@ export default function ProductsScreen({ navigation }) {
     return () => { unsub(); unsubCat(); };
   }, []);
 
-  // Resolve a product's categoryId -> category name for its illustration.
+  // Map category IDs to names for display
   const catNameById = useMemo(() => {
     const m = new Map<string, string>();
     categories.forEach((c) => m.set(c.id, c.name));

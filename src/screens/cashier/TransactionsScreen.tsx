@@ -29,8 +29,7 @@ const STATUS_ICON = { completed: 'checkmark-circle', cancelled: 'close-circle', 
 export default function TransactionsScreen() {
   const { profile } = useAuth();
   const insets = useSafeAreaInsets();
-  // Context returns undefined when the screen is not inside a bottom-tab navigator
-  // (e.g. the cashier stack), so the last list rows never sit under a tab bar there.
+  // Tab bar height helps position the list properly in tab nav
   const tabBarHeight = useContext(BottomTabBarHeightContext) ?? 0;
   const listPaddingBottom = tabBarHeight + insets.bottom + SPACING.xl;
   const [transactions, setTransactions] = useState([]);
@@ -46,8 +45,7 @@ export default function TransactionsScreen() {
   useEffect(() => {
     if (!profile?.uid) return;
     const base = collection(db, 'transactions');
-    // Cashiers filter by their own id only (no orderBy) so no composite
-    // Firestore index is needed — ordering is applied client-side below.
+    // For cashiers: own transactions only, sort client-side
     const q = seesAll
       ? query(base, orderBy('createdAt', 'desc'))
       : query(base, where('cashierId', '==', profile.uid));

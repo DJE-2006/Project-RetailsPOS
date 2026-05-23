@@ -15,7 +15,7 @@ import { COLORS, FONTS, SPACING, RADIUS, SHADOW } from '../../utils/theme';
 import { useResponsive, CONTENT_MAX_WIDTH } from '../../utils/responsive';
 import { FadeInView } from '../../utils/motion';
 
-// Daily shift close-out summary for the signed-in cashier.
+// Cashier's daily shift summary
 export default function ShiftSummaryScreen() {
   const { profile } = useAuth();
   const { width } = useResponsive();
@@ -36,8 +36,7 @@ export default function ShiftSummaryScreen() {
       const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
       const todayMs = todayStart.getTime();
 
-      // Single equality filter — today's window is applied client-side
-      // so no composite Firestore index is required.
+      // Only fetch today's transactions client-side
       const txSnap = await getDocs(query(
         collection(db, 'transactions'),
         where('cashierId', '==', profile.uid),
@@ -51,7 +50,7 @@ export default function ShiftSummaryScreen() {
       const sales = completed.reduce((s, t) => s + (t.total || 0), 0);
       const itemsSold = completed.reduce((s, t) => s + (t.itemCount || 0), 0);
 
-      // Payment method breakdown across completed transactions.
+      // Group by payment method
       let cash = 0, gcash = 0, card = 0;
       if (completed.length) {
         const paySnaps = await Promise.all(
