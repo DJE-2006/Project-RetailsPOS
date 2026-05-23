@@ -1,0 +1,12 @@
+Starting project at C:\Users\Dhruv Jae\Documents\Claude\Projects\ADV ni dhruv\RetailPOS
+Starting Metro Bundler
+
+The following packages should be updated for best compatibility with the installed expo version:
+  expo@55.0.24 - expected version: ~55.0.25
+  expo-font@55.0.7 - expected version: ~55.0.8
+Your project may not work correctly until you install the expected versions of the packages.
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Web node_modules\expo\AppEntry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 2063ms node_modules\expo\AppEntry.js (764 modules)
+ LOG  [web] Logs will appear in the browser console

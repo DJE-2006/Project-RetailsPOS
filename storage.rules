@@ -1,0 +1,9 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Product images and payment proofs: signed-in users only.
+    match /products/{file=**}        { allow read, write: if request.auth != null; }
+    match /payment_proofs/{file=**}  { allow read, write: if request.auth != null; }
+    match /avatars/{file=**}         { allow read, write: if request.auth != null; }
+  }
+}

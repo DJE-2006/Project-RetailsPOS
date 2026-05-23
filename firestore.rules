@@ -1,0 +1,29 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Any authenticated user can read/write their own user doc.
+    // Admin/manager checks can be tightened later via a role claim.
+    match /users/{uid} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null && request.auth.uid == uid
+                            || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Catalog + sales: any signed-in user can read; signed-in users can write.
+    match /products/{doc=**}          { allow read, write: if request.auth != null; }
+    match /categories/{doc=**}        { allow read, write: if request.auth != null; }
+    match /transactions/{doc=**}      { allow read, write: if request.auth != null; }
+    match /transaction_items/{doc=**} { allow read, write: if request.auth != null; }
+    match /payments/{doc=**}          { allow read, write: if request.auth != null; }
+    match /inventory_logs/{doc=**}    { allow read, write: if request.auth != null; }
+    match /receipts/{doc=**}          { allow read, write: if request.auth != null; }
+
+    function isAdmin() {
+      return request.auth != null &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}

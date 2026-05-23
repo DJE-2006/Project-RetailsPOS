@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "RetailPOS",
+    "slug": "retailpos",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F766E"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.retailpos.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0F766E"
+      },
+      "package": "com.retailpos.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "RetailPOS",
+      "shortName": "RetailPOS",
+      "themeColor": "#0F766E",
+      "backgroundColor": "#F1F5F9",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to upload product images and payment proofs."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow RetailPOS to use the camera to scan product barcodes."
+        }
+      ],
+      "expo-sharing",
+      "expo-font"
+    ]
+  }
+}

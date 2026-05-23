@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RetailPOS — Checkout</title>
+<link rel="stylesheet" href="css/pos.css">
+<style>
+  /* ── POS-specific layout ── */
+  .pos-wrap { display:flex; gap:16px; align-items:flex-start; }
+  .pos-left { flex:1; min-width:0; }
+
+  .cat-row { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; margin-bottom:14px; }
+  .cat-row::-webkit-scrollbar { height:0; }
+  .cat {
+    flex:0 0 auto; padding:8px 14px; border-radius:999px; font-size:13px; font-weight:650;
+    background:var(--surface); border:1px solid var(--border); color:var(--text-2);
+  }
+  .cat.active { background:var(--primary); border-color:var(--primary); color:#fff; }
+
+  .prod-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .prod {
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md);
+    padding:12px; cursor:pointer; transition:border-color .12s, box-shadow .12s, transform .05s;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .prod:hover { border-color:var(--primary); box-shadow:var(--sh-sm); }
+  .prod:active { transform:scale(.98); }
+  .prod-thumb {
+    aspect-ratio:1; border-radius:var(--r-sm); display:grid; place-items:center;
+    font-size:30px; background:var(--surface-alt);
+  }
+  .prod-name { font-size:13px; font-weight:650; line-height:1.3;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .prod-foot { display:flex; align-items:center; justify-content:space-between; }
+  .prod-price { font-size:14px; font-weight:800; color:var(--primary-dark); }
+  .prod-stock { font-size:10.5px; font-weight:700; color:var(--text-3); }
+  .prod-stock.low { color:var(--accent-dark); }
+
+  /* cart panel */
+  .cart {
+    flex:0 0 360px; width:360px; align-self:stretch;
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md);
+    box-shadow:var(--sh-sm); display:flex; flex-direction:column;
+    position:sticky; top:76px; max-height:calc(100vh - 96px);
+  }
+  .cart-head { padding:14px 16px; border-bottom:1px solid var(--divider);
+    display:flex; align-items:center; justify-content:space-between; }
+  .cart-head b { font-size:14px; }
+  .cart-items { flex:1; overflow-y:auto; padding:6px 0; }
+  .ci { display:flex; gap:10px; padding:11px 16px; align-items:center; }
+  .ci + .ci { border-top:1px solid var(--divider); }
+  .ci-emoji { width:38px; height:38px; flex:0 0 38px; border-radius:var(--r-sm);
+    background:var(--surface-alt); display:grid; place-items:center; font-size:19px; }
+  .ci-mid { flex:1; min-width:0; }
+  .ci-name { font-size:13px; font-weight:650; }
+  .ci-unit { font-size:11.5px; color:var(--text-3); }
+  .qty { display:flex; align-items:center; gap:8px; }
+  .qty button { width:26px; height:26px; border-radius:7px; background:var(--surface-alt);
+    border:1px solid var(--border); font-weight:800; font-size:14px; color:var(--text-2);
+    display:grid; place-items:center; }
+  .qty span { font-size:13px; font-weight:750; min-width:16px; text-align:center; }
+  .ci-total { font-size:13px; font-weight:800; min-width:62px; text-align:right; }
+  .cart-foot { border-top:1px solid var(--divider); padding:14px 16px; }
+  .sumrow { display:flex; justify-content:space-between; font-size:13px; color:var(--text-2);
+    margin-bottom:6px; }
+  .sumrow.grand { font-size:18px; font-weight:850; color:var(--text); margin:10px 0 14px;
+    padding-top:10px; border-top:1px dashed var(--border); }
+
+  /* mobile floating cart bar + sheet */
+  .cart-fab { display:none; }
+  .sheet-back { display:none; }
+
+  @media (max-width:1180px){
+    .prod-grid { grid-template-columns:repeat(3,1fr); }
+    .cart { flex:0 0 300px; width:300px; }
+  }
+  @media (max-width:767px){
+    .pos-wrap { display:block; }
+    .prod-grid { grid-template-columns:repeat(2,1fr); gap:10px; }
+    .cart {
+      position:fixed; inset:auto 0 0 0; width:auto; flex:none; z-index:50;
+      border-radius:var(--r-xl) var(--r-xl) 0 0; max-height:82vh;
+      transform:translateY(100%); transition:transform .26s cubic-bezier(.32,.72,0,1);
+    }
+    .cart.open { transform:translateY(0); }
+    .cart-grip { width:38px; height:4px; border-radius:99px; background:var(--border);
+      margin:8px auto 0; }
+    .sheet-back.show { display:block; position:fixed; inset:0; z-index:45;
+      background:rgba(15,23,42,.4); }
+    /* persistent bottom checkout bar */
+    .cart-fab {
+      display:flex; align-items:center; gap:12px; position:fixed; left:10px; right:10px;
+      bottom:66px; z-index:42; padding:11px 12px 11px 16px;
+      background:var(--primary); color:#fff; border-radius:var(--r-md); box-shadow:var(--sh-lg);
+    }
+    .cart-fab .cnt { background:#fff; color:var(--primary-dark); font-weight:800;
+      font-size:12px; padding:2px 8px; border-radius:999px; }
+    .cart-fab .ttl { font-size:16px; font-weight:850; margin-left:auto; }
+    .cart-fab .go { font-size:13px; font-weight:750; opacity:.9; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ░░ desktop left rail ░░ -->
+  <aside class="rail">
+    <div class="rail-brand">
+      <div class="rail-logo">R</div>
+      <div class="txt"><b>RetailPOS</b><span>Mabuhay Mart · Cebu</span></div>
+    </div>
+    <nav class="rail-nav">
+      <div class="rail-sec">Register</div>
+      <a class="nav-item active" href="pos.html"><span class="ic">🛒</span><span class="lbl">Checkout</span></a>
+      <a class="nav-item" href="transactions.html"><span class="ic">🧾</span><span class="lbl">Transactions</span></a>
+      <a class="nav-item" href="#"><span class="ic">⏸️</span><span class="lbl">Held carts</span><span class="badge">2</span></a>
+      <div class="rail-sec">Manage</div>
+      <a class="nav-item" href="manager.html"><span class="ic">📊</span><span class="lbl">Dashboard</span></a>
+      <a class="nav-item" href="reports.html"><span class="ic">📈</span><span class="lbl">Reports</span></a>
+      <a class="nav-item" href="#"><span class="ic">📦</span><span class="lbl">Products</span></a>
+    </nav>
+    <div class="rail-user">
+      <div class="avatar" style="background:#10B981">JM</div>
+      <div class="meta"><div class="nm">Jasmine M.</div><div class="rl">Cashier · Shift #204</div></div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="tb-burger">☰</button>
+      <div>
+        <h1>Checkout</h1>
+        <div class="sub">Register 1 · Shift #204</div>
+      </div>
+      <div class="topbar-spacer"></div>
+      <label class="search">🔍<input placeholder="Scan barcode or search…"></label>
+      <span class="tb-chip"><span class="dot"></span>Online</span>
+    </header>
+
+    <div class="content">
+      <div class="pos-wrap">
+        <!-- products -->
+        <div class="pos-left">
+          <div class="cat-row">
+            <button class="cat active">All</button>
+            <button class="cat">Beverages</button>
+            <button class="cat">Snacks</button>
+            <button class="cat">Bakery</button>
+            <button class="cat">Household</button>
+            <button class="cat">Personal Care</button>
+          </div>
+          <div class="prod-grid">
+            <div class="prod" onclick="addItem()">
+              <div class="prod-thumb">🥤</div>
+              <div class="prod-name">Coke Sakto 200ml</div>
+              <div class="prod-foot"><span class="prod-price tnum">₱18.00</span><span class="prod-stock">142</span></div>
+            </div>
+            <div class="prod" onclick="addItem()">
+              <div class="prod-thumb">🍞</div>
+              <div class="prod-name">Pandesal (pack of 10)</div>
+              <div class="prod-foot"><span class="prod-price tnum">₱45.00</span><span class="prod-stock">28</span></div>
+            </div>
+            <div class="prod" onclick="addItem()">
+              <div class="prod-thumb">☕</div>
+              <div class="prod-name">Kopiko Brown 3-in-1</div>
+              <div class="prod-foot"><span class="prod-price tnum">₱8.50</span><span class="prod-stock low">9 low</span></div>
+            </div>
+            <div class="prod" onclick="addItem()">
+              <div class="prod-thumb">🍜</div>
+              <div class="prod-name">Lucky Me Pancit Canton</div>
+              <div class="prod-foot"><span class="prod-price tnum">₱16.00</span><span class="prod-stock">204</span></div>
+            </div>
+            <div class="prod" onclick="addItem()">
+              <div class="prod-thumb">🧴</div>
+              <div class="prod-name">Safeguard Soap 130g</div>
+              <div class="prod-foot"><span class="prod-price tnum">₱42.00</span><span class="prod-stock">61</span></div>
+            </div>
+            <div class="prod" onclick="addItem()">
+              <div class="prod-thumb">🥚</div>
+              <div class="prod-name">Eggs (tray of 12)</div>
+              <div class="prod-foot"><span class="prod-price tnum">₱98.00</span><span class="prod-stock">17</span></div>
+            </div>
+            <div class="prod" onclick="addItem()">
+              <div class="prod-thumb">🍫</div>
+              <div class="prod-name">Cloud 9 Chocolate Bar</div>
+              <div class="prod-foot"><span class="prod-price tnum">₱12.00</span><span class="prod-stock">88</span></div>
+            </div>
+            <div class="prod" onclick="addItem()">
+              <div class="prod-thumb">🧂</div>
+              <div class="prod-name">Iodized Salt 250g</div>
+              <div class="prod-foot"><span class="prod-price tnum">₱14.00</span><span class="prod-stock">53</span></div>
+            </div>
+            <div class="prod" onclick="addItem()">
+              <div class="prod-thumb">🧃</div>
+              <div class="prod-name">Zesto Orange 200ml</div>
+              <div class="prod-foot"><span class="prod-price tnum">₱9.00</span><span class="prod-stock">120</span></div>
+            </div>
+            <div class="prod" onclick="addItem()">
+              <div class="prod-thumb">🍚</div>
+              <div class="prod-name">Sinandomeng Rice 1kg</div>
+              <div class="prod-foot"><span class="prod-price tnum">₱62.00</span><span class="prod-stock">34</span></div>
+            </div>
+            <div class="prod" onclick="addItem()">
+              <div class="prod-thumb">🧻</div>
+              <div class="prod-name">Tissue Roll 2-ply</div>
+              <div class="prod-foot"><span class="prod-price tnum">₱28.00</span><span class="prod-stock">46</span></div>
+            </div>
+            <div class="prod" onclick="addItem()">
+              <div class="prod-thumb">🥛</div>
+              <div class="prod-name">Bear Brand Milk 300ml</div>
+              <div class="prod-foot"><span class="prod-price tnum">₱33.00</span><span class="prod-stock low">6 low</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- cart -->
+        <aside class="cart" id="cart">
+          <div class="cart-grip"></div>
+          <div class="cart-head">
+            <b>Current Order · <span id="cnt">3</span> items</b>
+            <button class="btn btn-ghost" style="padding:4px 8px;font-size:12px;color:var(--accent-dark)">Hold</button>
+          </div>
+          <div class="cart-items">
+            <div class="ci">
+              <div class="ci-emoji">🥤</div>
+              <div class="ci-mid"><div class="ci-name">Coke Sakto 200ml</div><div class="ci-unit tnum">₱18.00 ea</div></div>
+              <div class="qty"><button>−</button><span>2</span><button>+</button></div>
+              <div class="ci-total tnum">₱36.00</div>
+            </div>
+            <div class="ci">
+              <div class="ci-emoji">🍞</div>
+              <div class="ci-mid"><div class="ci-name">Pandesal (pack of 10)</div><div class="ci-unit tnum">₱45.00 ea</div></div>
+              <div class="qty"><button>−</button><span>1</span><button>+</button></div>
+              <div class="ci-total tnum">₱45.00</div>
+            </div>
+            <div class="ci">
+              <div class="ci-emoji">🍜</div>
+              <div class="ci-mid"><div class="ci-name">Lucky Me Pancit Canton</div><div class="ci-unit tnum">₱16.00 ea</div></div>
+              <div class="qty"><button>−</button><span>4</span><button>+</button></div>
+              <div class="ci-total tnum">₱64.00</div>
+            </div>
+          </div>
+          <div class="cart-foot">
+            <div class="sumrow"><span>Subtotal</span><span class="tnum">₱145.00</span></div>
+            <div class="sumrow"><span>VAT (12%, incl.)</span><span class="tnum">₱15.54</span></div>
+            <div class="sumrow"><span>Discount</span><span class="tnum">₱0.00</span></div>
+            <div class="sumrow grand"><span>Total</span><span class="tnum">₱145.00</span></div>
+            <a class="btn btn-primary btn-lg btn-block" href="payment.html">Charge ₱145.00</a>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- mobile: floating checkout bar opens the cart sheet -->
+<div class="cart-fab" onclick="openCart()">
+  <span class="cnt" id="fabCnt">3</span>
+  <span>View order</span>
+  <span class="ttl tnum">₱145.00</span>
+  <span class="go">Charge →</span>
+</div>
+<div class="sheet-back" id="back" onclick="closeCart()"></div>
+
+<!-- mobile bottom tabs -->
+<nav class="tabbar">
+  <a class="active" href="pos.html"><span class="ic">🛒</span>Checkout</a>
+  <a href="transactions.html"><span class="ic">🧾</span>Sales</a>
+  <a href="manager.html"><span class="ic">📊</span>Dashboard</a>
+  <a href="reports.html"><span class="ic">📈</span>Reports</a>
+</nav>
+
+<script>
+  const cart = document.getElementById('cart');
+  const back = document.getElementById('back');
+  function openCart(){ cart.classList.add('open'); back.classList.add('show'); }
+  function closeCart(){ cart.classList.remove('open'); back.classList.remove('show'); }
+  let count = 3;
+  function addItem(){
+    count++;
+    document.getElementById('cnt').textContent = count;
+    document.getElementById('fabCnt').textContent = count;
+  }
+</script>
+</body>
+</html>
